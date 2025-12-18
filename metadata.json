@@ -1,0 +1,5 @@
+{
+  "name": "Smart Tutor AI",
+  "description": "A comprehensive AI-powered personal tutor web application featuring natural language Q&A, adaptive quizzes, summarization, flashcards, and concept mapping to enhance student learning.",
+  "requestFramePermissions": []
+}
