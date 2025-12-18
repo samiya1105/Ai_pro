@@ -6,9 +6,6 @@ import { ChatMessage, Flashcard, QuizQuestion, ConceptMapData, StudySummary } fr
  */
 const BACKEND_URL = "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query";
 
-// Use 'import.meta.env' for Vite projects
-//const BACKEND_URL = import.meta.env.VITE_API_URL || "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query";
-
 async function callBackend(prompt: string): Promise<string> {
   try {
     const response = await fetch(BACKEND_URL, {
