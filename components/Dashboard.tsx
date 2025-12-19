@@ -1,138 +1,113 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  LineChart,
-  Line
-} from 'recharts';
+  BarChart2, 
+  Trophy, 
+  Flame, 
+  Target, 
+  ArrowRight, 
+  Star, 
+  Activity
+} from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { storageService } from '../services/storageService';
-import { Trophy, Clock, Target, Flame } from 'lucide-react';
+import { AuthUser } from '../types';
 
-const Dashboard: React.FC = () => {
-  const results = storageService.getQuizResults();
-  const averageScore = storageService.getAverageScore();
-  const recentTopics = storageService.getRecentTopics();
+interface DashboardProps {
+  user: AuthUser;
+  onStartQuiz: (topic: string) => void;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ user, onStartQuiz }) => {
+  const results = useMemo(() => storageService.getQuizResults() || [], []);
+  const averageScore = useMemo(() => storageService.getAverageScore() || 0, [results]);
+  const streak = useMemo(() => storageService.getStreak() || 0, [results]);
+  const recommendation = useMemo(() => storageService.getRecommendation() || "Mastering AI Study Tools", [results]);
+  const goalComp = useMemo(() => storageService.getWeeklyGoalCompletion() || "0/10", [results]);
   
-  // Prepare chart data
-  const chartData = results.slice(-7).map((r, i) => ({
-    name: `Quiz ${i + 1}`,
-    score: Math.round((r.score / r.total) * 100),
-    topic: r.topic
-  }));
+  const chartData = useMemo(() => 
+    results.slice(-7).map((r, i) => ({
+      name: `S${i + 1}`,
+      score: Math.round((r.score / r.total) * 100),
+    })), 
+  [results]);
+
+  const firstName = user?.name?.split(' ')[0] || "Scholar";
 
   return (
-    <div className="space-y-6">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-800">Welcome back, Student!</h1>
-        <p className="text-slate-500">You're making great progress. Ready to learn something new?</p>
+    <div className="space-y-6 pb-12">
+      <header className="mb-10">
+        <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tighter">Accelerate Your Learning, {firstName}! 🚀</h1>
+        <p className="text-slate-500 dark:text-slate-400 font-bold mt-1">Your academic profile is synced and active.</p>
       </header>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-          <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-blue-100 text-blue-600 rounded-xl">
-              <Trophy size={24} />
-            </div>
-            <span className="text-green-500 text-sm font-semibold">+12%</span>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+          <div className="p-3 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-2xl w-fit mb-4">
+            <Trophy size={24} />
           </div>
-          <span className="text-3xl font-bold text-slate-800">{averageScore}%</span>
-          <span className="text-slate-500 text-sm">Average Score</span>
+          <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">{averageScore}%</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-2">Avg Proficiency</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-indigo-100 text-indigo-600 rounded-xl">
-              <Clock size={24} />
-            </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+          <div className="p-3 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl w-fit mb-4">
+            <Activity size={24} />
           </div>
-          <span className="text-3xl font-bold text-slate-800">{results.length}</span>
-          <span className="text-slate-500 text-sm">Quizzes Taken</span>
+          <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">{results.length}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-2">Lessons Done</p>
+          <p className="text-[9px] text-slate-400 font-bold mt-1 italic">Total sessions completed</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-orange-100 text-orange-600 rounded-xl">
-              <Flame size={24} />
-            </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+          <div className="p-3 bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-2xl w-fit mb-4">
+            <Flame size={24} />
           </div>
-          <span className="text-3xl font-bold text-slate-800">3</span>
-          <span className="text-slate-500 text-sm">Day Streak</span>
+          <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">{streak}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-2">Day Streak</p>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col">
-           <div className="flex justify-between items-start mb-4">
-            <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
-              <Target size={24} />
-            </div>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 shadow-sm transition-transform hover:scale-[1.02]">
+          <div className="p-3 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-2xl w-fit mb-4">
+            <Target size={24} />
           </div>
-          <span className="text-3xl font-bold text-slate-800">8/10</span>
-          <span className="text-slate-500 text-sm">Weekly Goals</span>
+          <p className="text-3xl font-black text-slate-900 dark:text-white leading-none">{goalComp}</p>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase tracking-widest mt-2">Goal Progress</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Main Chart */}
-        <div className="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Performance History</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 shadow-sm min-h-[400px]">
+          <h3 className="text-xl font-black text-slate-800 dark:text-white mb-8 flex items-center gap-3">
+             <BarChart2 size={24} className="text-blue-500" /> Proficiency Growth
+          </h3>
           <div className="h-64 w-full">
             {chartData.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                  <XAxis dataKey="name" tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} />
-                  <YAxis tick={{fontSize: 12, fill: '#64748b'}} axisLine={false} tickLine={false} domain={[0, 100]} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}} 
-                    cursor={{stroke: '#cbd5e1', strokeWidth: 2}}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="score" 
-                    stroke="#2563eb" 
-                    strokeWidth={3} 
-                    dot={{fill: '#2563eb', strokeWidth: 2, r: 4, stroke: '#fff'}}
-                    activeDot={{r: 6, strokeWidth: 0}}
-                  />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.3} />
+                  <XAxis dataKey="name" hide />
+                  <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                  <Tooltip contentStyle={{borderRadius: '16px', background: '#0f172a', border: 'none', color: '#fff'}} />
+                  <Line type="monotone" dataKey="score" stroke="#2563eb" strokeWidth={5} dot={{r: 6, fill: '#2563eb', stroke: '#fff', strokeWidth: 2}} />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-400">
-                No quiz data yet. Take a quiz to see your progress!
-              </div>
+              <div className="h-full flex items-center justify-center text-slate-400 font-bold italic">Log your first quiz to see growth data.</div>
             )}
           </div>
         </div>
 
-        {/* Recent Topics */}
-        <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-          <h3 className="text-lg font-bold text-slate-800 mb-6">Recent Topics</h3>
-          <div className="space-y-4">
-            {recentTopics.length > 0 ? (
-              recentTopics.map((topic, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                  <span className="text-sm font-medium text-slate-700">{topic}</span>
-                </div>
-              ))
-            ) : (
-              <p className="text-slate-400 text-sm">No topics studied yet.</p>
-            )}
-          </div>
-          
-          <div className="mt-8">
-            <h4 className="text-sm font-bold text-slate-800 mb-3">Recommended for you</h4>
-             <div className="p-4 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white">
-               <p className="text-sm font-medium mb-2 opacity-90">Based on your recent scores</p>
-               <p className="font-bold text-lg mb-3">Try "Linear Algebra"</p>
-               <button className="text-xs bg-white/20 hover:bg-white/30 transition-colors px-3 py-1.5 rounded-lg">Start Quiz</button>
-             </div>
-          </div>
+        <div className="bg-gradient-to-br from-blue-600 via-indigo-600 to-indigo-800 p-8 rounded-[2.5rem] text-white shadow-2xl relative overflow-hidden flex flex-col justify-center">
+           <Star className="absolute -top-6 -right-6 w-32 h-32 opacity-10 rotate-12" />
+           <p className="text-[10px] font-black uppercase tracking-[0.3em] opacity-70 mb-4">Smart Suggestion</p>
+           <p className="font-medium text-lg mb-2 opacity-90">Based on your activity:</p>
+           <p className="font-black text-3xl mb-10 leading-tight">"{recommendation}"</p>
+           <button 
+              onClick={() => onStartQuiz(recommendation)}
+              className="w-full bg-white text-indigo-700 font-black py-5 rounded-2xl hover:scale-[1.03] transition-transform shadow-xl flex items-center justify-center gap-3"
+            >
+             Continue Mastery <ArrowRight size={20} />
+           </button>
         </div>
       </div>
     </div>
