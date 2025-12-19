@@ -4,7 +4,11 @@ import { ChatMessage, Flashcard, QuizQuestion, ConceptMapData, StudySummary } fr
  * PRODUCTION BACKEND URL:
  * This points to your Node.js Express server deployed on GCP Cloud Run.
  */
-const BACKEND_URL = "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query";
+//const BACKEND_URL = "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query";
+
+// This looks for a Netlify variable named VITE_API_URL. 
+// If it doesn't find it (like when you are coding locally), it uses your GCP link as a backup.
+const BACKEND_URL = (import.meta as any).env.VITE_API_URL || "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query"; // ✅ This WORKS
 
 async function callBackend(prompt: string): Promise<string> {
   try {
