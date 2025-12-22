@@ -3,12 +3,6 @@ export enum MessageRole {
   MODEL = 'model',
 }
 
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-}
-
 export interface ChatMessage {
   id: string;
   role: MessageRole;
@@ -57,6 +51,12 @@ export interface StudySummary {
   originalText: string;
   summary: string;
   keyPoints: string[];
+}
+
+export interface AuthUser {
+  name: string;
+  email: string;
+  joinedDate: number;
 }
 
 export type AppView = 'dashboard' | 'chat' | 'quiz' | 'flashcards' | 'summary' | 'concept-map';

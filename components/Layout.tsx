@@ -1,6 +1,5 @@
-import * as React from 'react';
-import { AppView, AuthUser } from '../types.ts';
-import { storageService } from '../services/storageService.ts';
+import React, { useState } from 'react';
+import { AppView, AuthUser } from '../types';
 import { 
   MessageSquare, 
   CheckSquare, 
@@ -10,35 +9,47 @@ import {
   Menu,
   X,
   GraduationCap,
-  Sun,
-  Moon,
   LogOut
 } from 'lucide-react';
+import { storageService } from '../services/storageService';
 
 interface LayoutProps {
   currentView: AppView;
   onNavigate: (view: AppView) => void;
   user: AuthUser;
   onLogout: () => void;
-  isDarkMode: boolean;
-  onToggleTheme: () => void;
   children: React.ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, user, onLogout, isDarkMode, onToggleTheme, children }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
-  const weeklyProgress = storageService.getWeeklyProgress();
+interface NavItemProps {
+  view: AppView;
+  label: string;
+  icon: React.ElementType;
+  isActive: boolean;
+  onClick: () => void;
+}
 
-  const userInitial = React.useMemo(() => {
-    return user.name ? user.name.charAt(0).toUpperCase() : '?';
-  }, [user.name]);
+const NavItem: React.FC<NavItemProps> = ({ 
+  label, 
+  icon: Icon, 
+  isActive, 
+  onClick 
+}) => (
+  <button
+    onClick={onClick}
+    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+      isActive 
+        ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
+        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+    }`}
+  >
+    <Icon size={20} />
+    <span className="font-bold">{label}</span>
+  </button>
+);
 
-  const handleLogoutAction = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Immediate logout for better reliability
-    onLogout();
-  };
+const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, user, onLogout, children }) => {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const navItems = [
     { view: 'dashboard' as AppView, label: 'Dashboard', icon: GraduationCap },
@@ -49,124 +60,114 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, user, onLogout
     { view: 'concept-map' as AppView, label: 'Concept Maps', icon: Share2 },
   ];
 
+  const userInitial = user.name.charAt(0).toUpperCase();
+
   return (
-    <div className={`flex h-screen overflow-hidden transition-colors duration-300 ${isDarkMode ? 'dark bg-slate-950' : 'bg-slate-50'}`}>
-      {/* Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 p-4 transition-colors duration-300">
+    <div className="flex h-screen bg-slate-50 overflow-hidden">
+      {/* Sidebar for Desktop */}
+      <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-full p-4">
         <div className="flex items-center justify-between px-2 py-4 mb-6">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">ST</div>
-            <span className="text-lg font-bold text-slate-800 dark:text-white">SmartTutor</span>
+            <span className="text-lg font-black text-slate-800">SmartTutor</span>
           </div>
-          <button 
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              onToggleTheme();
-            }}
-            className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-500 transition-colors"
-          >
-            {isDarkMode ? <Sun size={18} /> : <Moon size={18} />}
-          </button>
         </div>
         
         <nav className="flex-1 space-y-1">
           {navItems.map((item) => (
-            <button
+            <NavItem
               key={item.view}
+              {...item}
+              isActive={currentView === item.view}
               onClick={() => onNavigate(item.view)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
-                currentView === item.view 
-                  ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/30' 
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <item.icon size={20} />
-              <span className="font-bold">{item.label}</span>
-            </button>
+            />
           ))}
 
-          {/* Logout Button in Sidebar */}
-          <button
-            type="button"
-            onClick={handleLogoutAction}
-            className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 mt-4 group"
-          >
-            <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
-            <span className="font-bold">Logout</span>
-          </button>
+          <div className="pt-4 mt-4 border-t border-slate-100">
+             <button
+              onClick={onLogout}
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-all font-bold group"
+            >
+              <LogOut size={20} className="group-hover:translate-x-1 transition-transform" />
+              <span>Logout</span>
+            </button>
+          </div>
         </nav>
 
-        <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 mt-auto">
-          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-black uppercase mb-2 tracking-widest">Study Progress</p>
-          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 mb-2 overflow-hidden">
-            <div className="bg-green-500 h-full transition-all duration-1000" style={{ width: `${weeklyProgress}%` }}></div>
+        <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-auto">
+          <div className="flex items-center gap-3 mb-3">
+             <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black">
+               {userInitial}
+             </div>
+             <div className="overflow-hidden">
+               <p className="text-sm font-bold text-slate-900 truncate">{user.name}</p>
+               <p className="text-xs text-slate-500 truncate">{user.email}</p>
+             </div>
           </div>
-          <p className="text-xs text-slate-600 dark:text-slate-300 font-bold">{weeklyProgress}% Completed</p>
+          <p className="text-[10px] text-slate-400 font-black uppercase mb-2 tracking-widest">Study Goals</p>
+          <div className="w-full bg-slate-200 rounded-full h-1.5 mb-2 overflow-hidden">
+            <div className="bg-green-500 h-full rounded-full w-[75%] transition-all duration-1000"></div>
+          </div>
+          <p className="text-xs text-slate-600 font-bold">75% Complete</p>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Mobile Menu Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-white p-4 shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-8 px-2">
+              <span className="text-xl font-black text-slate-800">SmartTutor</span>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors"><X size={24} /></button>
+            </div>
+            <nav className="space-y-1">
+              {navItems.map((item) => (
+                <NavItem
+                  key={item.view}
+                  {...item}
+                  isActive={currentView === item.view}
+                  onClick={() => {
+                    onNavigate(item.view);
+                    setIsMobileMenuOpen(false);
+                  }}
+                />
+              ))}
+              <div className="pt-4 mt-4 border-t border-slate-100">
+                <button
+                  onClick={() => { onLogout(); setIsMobileMenuOpen(false); }}
+                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-red-500 font-bold"
+                >
+                  <LogOut size={20} />
+                  <span>Logout</span>
+                </button>
+              </div>
+            </nav>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Area */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <header className="flex items-center justify-between p-4 md:px-8 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors duration-300 z-40">
+        <header className="flex items-center justify-between p-4 md:px-8 bg-white border-b border-slate-200 sticky top-0 z-30">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 text-slate-600 dark:text-slate-400">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
               <Menu size={24} />
             </button>
-            <h2 className="hidden md:block font-black text-slate-800 dark:text-white capitalize text-xl">{currentView.replace('-', ' ')}</h2>
+            <h2 className="font-black text-slate-800 capitalize text-xl">{currentView.replace('-', ' ')}</h2>
           </div>
 
           <div className="flex items-center gap-4">
-             <div className="text-right hidden sm:block">
-               <p className="text-sm font-black text-slate-900 dark:text-white leading-tight">{user.name}</p>
-               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">{user.email}</p>
-             </div>
-             <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-black text-lg shadow-md border-2 border-white dark:border-slate-800 ring-2 ring-blue-500/20">
+             <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200">
                {userInitial}
              </div>
           </div>
         </header>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
-          <div className="max-w-6xl mx-auto h-full animate-in fade-in duration-500">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50/50">
+          <div className="max-w-6xl mx-auto h-full animate-in fade-in slide-in-from-bottom-4 duration-500">
             {children}
           </div>
         </div>
-
-        {isMobileMenuOpen && (
-          <div className="fixed inset-0 z-50 md:hidden bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)}>
-            <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-slate-900 p-4 transition-colors" onClick={e => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-8 px-2">
-                <span className="text-xl font-bold text-slate-800 dark:text-white">SmartTutor</span>
-                <button onClick={() => setIsMobileMenuOpen(false)} className="dark:text-white"><X size={24} /></button>
-              </div>
-              <nav className="space-y-1">
-                {navItems.map((item) => (
-                  <button
-                    key={item.view}
-                    onClick={() => { onNavigate(item.view); setIsMobileMenuOpen(false); }}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${currentView === item.view ? 'bg-blue-600 text-white' : 'text-slate-600 dark:text-slate-400'}`}
-                  >
-                    <item.icon size={20} />
-                    <span className="font-bold">{item.label}</span>
-                  </button>
-                ))}
-                
-                {/* Logout Button in Mobile Menu */}
-                <button
-                  onClick={(e) => {
-                    handleLogoutAction(e);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 mt-4 group"
-                >
-                  <LogOut size={20} />
-                  <span className="font-bold">Logout</span>
-                </button>
-              </nav>
-            </div>
-          </div>
-        )}
       </main>
     </div>
   );
