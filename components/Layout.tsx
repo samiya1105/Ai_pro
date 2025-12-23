@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { AppView, AuthUser } from '../types';
 import { 
+  BookOpen, 
   MessageSquare, 
   CheckSquare, 
   FileText, 
@@ -9,9 +10,10 @@ import {
   Menu,
   X,
   GraduationCap,
-  LogOut
+  LogOut,
+  Settings,
+  Bell
 } from 'lucide-react';
-import { storageService } from '../services/storageService';
 
 interface LayoutProps {
   currentView: AppView;
@@ -30,6 +32,7 @@ interface NavItemProps {
 }
 
 const NavItem: React.FC<NavItemProps> = ({ 
+  view, 
   label, 
   icon: Icon, 
   isActive, 
@@ -157,7 +160,10 @@ const Layout: React.FC<LayoutProps> = ({ currentView, onNavigate, user, onLogout
           </div>
 
           <div className="flex items-center gap-4">
-             <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold border border-slate-200">
+             <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors"><Bell size={20} /></button>
+             <button className="p-2 text-slate-400 hover:text-slate-600 transition-colors"><Settings size={20} /></button>
+             <div className="h-8 w-[1px] bg-slate-200 mx-1 hidden sm:block"></div>
+             <div className="w-10 h-10 rounded-full bg-slate-100 hidden sm:flex items-center justify-center text-slate-600 font-bold border border-slate-200">
                {userInitial}
              </div>
           </div>
