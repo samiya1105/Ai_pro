@@ -4,12 +4,38 @@ import { ChatMessage, Flashcard, QuizQuestion, ConceptMapData, StudySummary } fr
  * PRODUCTION BACKEND URL:
  * This points to your Node.js Express server deployed on GCP Cloud Run.
  */
-//const BACKEND_URL = "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query";
-
-// This looks for a Netlify variable named VITE_API_URL. 
-// If it doesn't find it (like when you are coding locally), it uses your GCP link as a backup.
 const env = (import.meta as any).env || {};
 const BACKEND_URL = env.VITE_API_URL || "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query";
+
+/**
+ * Robustly extracts JSON from a string by finding the outermost braces.
+ * This prevents failures caused by conversational chatter or nested code blocks.
+ */
+function extractJSON(text: string): any {
+  try {
+    // Find the first and last structural characters of a JSON object or array
+    const start = text.search(/\{|\[/);
+    const end = Math.max(text.lastIndexOf('}'), text.lastIndexOf(']'));
+
+    if (start === -1 || end === -1 || end < start) {
+      // If no structural characters found, check if AI is talking instead of coding
+      if (text.toLowerCase().includes("i need") || text.toLowerCase().includes("please provide")) {
+        throw new Error("The AI needs more information. Please provide more detailed study notes.");
+      }
+      throw new Error("No JSON structure found in AI response.");
+    }
+
+    const jsonStr = text.substring(start, end + 1);
+    return JSON.parse(jsonStr);
+  } catch (e: any) {
+    console.error("JSON Extraction failed head:", text.slice(0, 100));
+    // Provide a user-friendly error if the AI returned conversational text instead of data
+    if (e instanceof SyntaxError) {
+       throw new Error("The AI returned malformed data. Please try clarifying your request or providing more text.");
+    }
+    throw e;
+  }
+}
 
 async function callBackend(prompt: string): Promise<string> {
   try {
@@ -37,11 +63,9 @@ async function callBackend(prompt: string): Promise<string> {
     return data.answer;
   } catch (error: any) {
     console.error("Communication Failure:", error);
-    
     if (error.name === 'TypeError' && error.message === 'Failed to fetch') {
-      throw new Error("Cannot reach the AI service. Please verify the backend URL is correct and the GCP Cloud Run service is active.");
+      throw new Error("Cannot reach the AI service. Please verify the backend URL is correct.");
     }
-    
     throw error;
   }
 }
@@ -63,67 +87,61 @@ New Student Query: ${message}`;
   },
 
   async generateQuiz(topic: string, difficulty: "easy" | "medium" | "hard" = "medium"): Promise<QuizQuestion[]> {
-    const prompt = `Generate a ${difficulty} level MCQ quiz about "${topic}". Return exactly 5 questions in a JSON array inside an object called "questions". Each question must have 'question', 'options' (array of 4), 'correctAnswer' (string matching one option), and 'explanation'. Return ONLY valid JSON.`;
+    const prompt = `Task: Generate a ${difficulty} level MCQ quiz about "${topic}". 
+Requirement: Return ONLY a JSON object. No conversational text.
+Format: { "questions": [ { "question": "...", "options": ["...", "...", "...", "..."], "correctAnswer": "...", "explanation": "..." } ] }
+Questions count: 5. Return ONLY valid JSON.`;
     
     const text = await callBackend(prompt);
-    try {
-      const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const json = JSON.parse(cleanText);
-      return json.questions || [];
-    } catch (e) {
-      console.error("Quiz Parsing Failure:", e, text);
-      throw new Error("The AI returned data in an incompatible format. Please try again.");
-    }
+    const json = extractJSON(text);
+    return json.questions || [];
   },
 
   async generateFlashcards(topic: string): Promise<Flashcard[]> {
-    const prompt = `Create 8 study flashcards for "${topic}". Return a JSON object with a "cards" array containing { "front": "...", "back": "..." } objects. Return ONLY valid JSON.`;
+    const prompt = `Task: Create 8 study flashcards for "${topic}".
+Requirement: Return ONLY a JSON object. No conversational text.
+Format: { "cards": [ { "front": "...", "back": "..." } ] }
+Return ONLY valid JSON.`;
     
     const text = await callBackend(prompt);
-    try {
-      const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const json = JSON.parse(cleanText);
-      return json.cards || [];
-    } catch (e) {
-      console.error("Flashcard Parsing Failure:", e, text);
-      throw new Error("Unable to create flashcards. Please try a different topic.");
-    }
+    const json = extractJSON(text);
+    return json.cards || [];
   },
 
   async generateSummary(text: string): Promise<StudySummary> {
-    const prompt = `Summarize the following study notes concisely. Return a JSON object with "summary" (string) and "keyPoints" (array of strings). Return ONLY valid JSON. CONTENT: ${text}`;
+    if (!text || text.trim().length < 20) {
+      throw new Error("Please provide more detailed notes for a quality summary.");
+    }
+
+    const prompt = `Task: Summarize the following study notes concisely.
+Requirement: Return ONLY a JSON object. No conversational text.
+Format: { "summary": "A concise paragraph summarizing the core message.", "keyPoints": ["Point 1", "Point 2", "Point 3"] }
+
+Study Notes to Summarize:
+${text}`;
     
     const result = await callBackend(prompt);
-    try {
-      const cleanText = result.replace(/```json/g, '').replace(/```/g, '').trim();
-      const json = JSON.parse(cleanText);
+    const json = extractJSON(result);
 
-      return {
-        originalText: text,
-        summary: json.summary || "",
-        keyPoints: json.keyPoints || [],
-      };
-    } catch (e) {
-      console.error("Summary Parsing Failure:", e, result);
-      throw new Error("Failed to process study notes.");
-    }
+    return {
+      originalText: text,
+      summary: json.summary || "No summary could be generated.",
+      keyPoints: json.keyPoints || [],
+    };
   },
 
   async generateConceptMap(topic: string): Promise<ConceptMapData> {
-    const prompt = `Create a concept map for "${topic}". Identify 10 key nodes and their relationships. Return as JSON with "nodes" [{ "id": "...", "label": "..." }] and "links" [{ "source": "id1", "target": "id2", "label": "relationship" }]. Return ONLY valid JSON.`;
+    const prompt = `Task: Create a concept map for "${topic}". Identify 10 key nodes and their relationships.
+Requirement: Return ONLY a JSON object. No conversational text.
+Format: { "nodes": [{ "id": "...", "label": "..." }], "links": [{ "source": "id1", "target": "id2", "label": "relationship" }] }
+Return ONLY valid JSON.`;
     
     const text = await callBackend(prompt);
-    try {
-      const cleanText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const json = JSON.parse(cleanText);
+    const json = extractJSON(text);
 
-      return {
-        nodes: json.nodes || [],
-        links: json.links || [],
-      };
-    } catch (e) {
-      console.error("Concept Map Parsing Failure:", e, text);
-      throw new Error("Could not visualize this concept. Try a more specific topic.");
-    }
+    return {
+      nodes: json.nodes || [],
+      links: json.links || [],
+    };
   }
 };

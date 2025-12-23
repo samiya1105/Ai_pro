@@ -35,6 +35,7 @@ const ConceptMap: React.FC = () => {
 
     const width = svgRef.current.clientWidth;
     const height = svgRef.current.clientHeight;
+    const isDark = document.documentElement.classList.contains('dark');
 
     // Clear previous
     d3.select(svgRef.current).selectAll("*").remove();
@@ -55,21 +56,21 @@ const ConceptMap: React.FC = () => {
       .enter().append("marker")
       .attr("id", String)
       .attr("viewBox", "0 -5 10 10")
-      .attr("refX", 25) // pushed back so it doesn't overlap node text too much
+      .attr("refX", 25)
       .attr("refY", 0)
       .attr("markerWidth", 6)
       .attr("markerHeight", 6)
       .attr("orient", "auto")
       .append("path")
       .attr("d", "M0,-5L10,0L0,5")
-      .attr("fill", "#94a3b8");
+      .attr("fill", isDark ? "#475569" : "#94a3b8");
 
     // Edges
     const link = svg.append("g")
       .selectAll("line")
       .data(data.links)
       .join("line")
-      .attr("stroke", "#cbd5e1")
+      .attr("stroke", isDark ? "#334155" : "#cbd5e1")
       .attr("stroke-opacity", 0.6)
       .attr("stroke-width", 2)
       .attr("marker-end", "url(#end)");
@@ -82,7 +83,7 @@ const ConceptMap: React.FC = () => {
         .attr("class", "link-label")
         .attr("text-anchor", "middle")
         .attr("dy", -5)
-        .attr("fill", "#64748b")
+        .attr("fill", isDark ? "#94a3b8" : "#64748b")
         .style("font-size", "10px")
         .text((d: any) => d.label || "");
 
@@ -100,31 +101,30 @@ const ConceptMap: React.FC = () => {
     node.append("circle")
       .attr("r", 8)
       .attr("fill", "#3b82f6")
-      .attr("stroke", "#fff")
+      .attr("stroke", isDark ? "#1e293b" : "#fff")
       .attr("stroke-width", 2);
 
     // Node Text Background
     node.append("rect")
       .attr("rx", 6)
       .attr("ry", 6)
-      .attr("fill", "white")
-      .attr("fill-opacity", 0.8)
-      .attr("stroke", "#e2e8f0")
+      .attr("fill", isDark ? "#1e293b" : "white")
+      .attr("fill-opacity", 0.9)
+      .attr("stroke", isDark ? "#334155" : "#e2e8f0")
       .attr("stroke-width", 1);
       
     // Node Labels
-    const labels = node.append("text")
+    node.append("text")
       .attr("dy", 25)
       .attr("text-anchor", "middle")
       .text((d: any) => d.label)
-      .attr("fill", "#1e293b")
+      .attr("fill", isDark ? "#f1f5f9" : "#1e293b")
       .style("font-size", "12px")
       .style("font-weight", "500")
       .style("pointer-events", "none")
       .each(function(d) {
-          // Calculate BBox for background rect
           const bbox = (this as SVGTextElement).getBBox();
-          const padding = 4;
+          const padding = 6;
           const rect = d3.select(this.parentNode as any).select("rect");
           rect
             .attr("x", bbox.x - padding)
@@ -175,19 +175,19 @@ const ConceptMap: React.FC = () => {
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           placeholder="Enter a concept to visualize (e.g., Photosynthesis, Solar System)..."
-          className="flex-1 p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none shadow-sm"
+          className="flex-1 p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none shadow-sm dark:text-white transition-all"
         />
         <button
           onClick={generateMap}
           disabled={!topic.trim() || isLoading}
-          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2"
+          className="bg-blue-600 text-white px-6 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 shadow-lg shadow-blue-500/20"
         >
           {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Share2 size={20} />}
           Visualize
         </button>
       </div>
 
-      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden">
+      <div className="flex-1 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 relative overflow-hidden transition-colors">
         {data ? (
           <svg ref={svgRef} className="w-full h-full cursor-grab active:cursor-grabbing"></svg>
         ) : (
@@ -208,7 +208,7 @@ const ConceptMap: React.FC = () => {
         
         {data && (
            <div className="absolute bottom-4 right-4 flex gap-2">
-             <div className="bg-white/90 backdrop-blur p-2 rounded-lg shadow-sm border border-slate-100 text-xs text-slate-500">
+             <div className="bg-white/90 dark:bg-slate-800/90 backdrop-blur p-2 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 text-[10px] text-slate-500 dark:text-slate-400 transition-colors">
                Drag nodes to rearrange
              </div>
            </div>
