@@ -147,10 +147,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onStartQuiz }) => {
                 </div>
               ))
             ) : (
-              <div className="py-10 text-center">
-                <p className="text-slate-400 text-sm">No topics studied yet.</p>
-                <p className="text-slate-300 dark:text-slate-600 text-[10px] mt-2 font-medium">Take a quiz to see recent topics here</p>
-              </div>
+              null /* Blank for first-time users as requested */
             )}
           </div>
         </div>

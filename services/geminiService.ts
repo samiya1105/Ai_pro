@@ -5,7 +5,15 @@ import { ChatMessage, Flashcard, QuizQuestion, ConceptMapData, StudySummary } fr
  * This points to your Node.js Express server deployed on GCP Cloud Run.
  */
 const env = (import.meta as any).env || {};
-const BACKEND_URL = env.VITE_API_URL || "https://aistudybuddy-backend-2035351700.us-central1.run.app/api/query";
+const BASE_URL = env.VITE_API_URL || "https://aistudybuddy-backend-2035351700.us-central1.run.app";
+
+/**
+ * Ensure the final endpoint is ALWAYS /api/query
+ * This handles cases where VITE_API_URL might be missing the path suffix.
+ */
+const BACKEND_URL = BASE_URL.includes('/api/query') 
+  ? BASE_URL 
+  : `${BASE_URL.replace(/\/$/, '')}/api/query`;
 
 /**
  * Robustly extracts JSON from a string by finding the outermost braces.
@@ -130,7 +138,7 @@ ${text}`;
     };
   },
 
-  async generateConceptMap(topic: string): Promise<ConceptMapData> {
+  async generateConceptMap(topic: string): Promise<ConceptMapData> {a
     const prompt = `Task: Create a concept map for "${topic}". Identify 10 key nodes and their relationships.
 Requirement: Return ONLY a JSON object. No conversational text.
 Format: { "nodes": [{ "id": "...", "label": "..." }], "links": [{ "source": "id1", "target": "id2", "label": "relationship" }] }
