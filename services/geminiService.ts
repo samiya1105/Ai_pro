@@ -138,7 +138,7 @@ ${text}`;
     };
   },
 
-  async generateConceptMap(topic: string): Promise<ConceptMapData> {a
+  async generateConceptMap(topic: string): Promise<ConceptMapData> {
     const prompt = `Task: Create a concept map for "${topic}". Identify 10 key nodes and their relationships.
 Requirement: Return ONLY a JSON object. No conversational text.
 Format: { "nodes": [{ "id": "...", "label": "..." }], "links": [{ "source": "id1", "target": "id2", "label": "relationship" }] }
